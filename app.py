@@ -1,23 +1,15 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from transformers import pipeline
+import requests # نحتاج هذه المكتبة للاتصال بالـ API
 import os
 
 app = Flask(__name__, static_folder='.')
-CORS(app) 
+CORS(app)
 
-# 1. التعديل الجوهري: التحميل من الإنترنت بدلاً من المجلد المحلي
-# هذا يضمن أن الموديل كامل 100% ولا يحتاج لرفعه على GitHub
-MODEL_PATH = "UBC-NLP/MARBERTv2"
-
-# 2. تحميل الموديل
-try:
-    # سيقوم السيرفر بتحميل الموديل تلقائياً عند أول تشغيل
-    pipe = pipeline("text-classification", model=MODEL_PATH)
-    print("✅ Model loaded successfully from Hugging Face Hub")
-except Exception as e:
-    print(f"❌ Error loading model: {e}")
-    pipe = None
+# 1. رابط الـ API للموديل الأصلي حقكم في Hugging Face
+API_URL = "https://api-inference.huggingface.co/models/UBC-NLP/MARBERTv2"
+# ملاحظة: إذا كان الموديل يتطلب توكن، يمكن إضافته هنا، لكن غالباً الموديلات العامة لا تحتاجه فوراً
+headers = {} 
 
 @app.route('/')
 def index():
@@ -25,18 +17,26 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if pipe is None:
-        return jsonify({"error": "Model not loaded"}), 500
-    
     data = request.json
     text = data.get("text", "")
     
     if not text:
         return jsonify({"error": "No text provided"}), 400
+
+    # 2. إرسال النص للموديل في Hugging Face بدلاً من تشغيله محلياً
+    response = requests.post(API_URL, headers=headers, json={"inputs": text})
     
-    # إجراء التنبؤ
-    result = pipe(text)[0]
-    return jsonify({"mood": result['label']})
+    if response.status_code != 200:
+        return jsonify({"error": "AI API Error", "details": response.text}), 500
+
+    # 3. معالجة النتيجة القادمة من الـ API
+    result = response.json()
+    # النتيجة عادة تكون قائمة داخل قائمة، نأخذ أعلى احتمال
+    if isinstance(result, list) and len(result) > 0:
+        mood = result[0][0]['label'] if isinstance(result[0], list) else result[0]['label']
+        return jsonify({"mood": mood})
+    
+    return jsonify({"error": "Unexpected AI response"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
