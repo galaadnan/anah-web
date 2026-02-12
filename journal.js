@@ -84,8 +84,9 @@ if (saveBtn && note) {
       saveBtn.disabled = true;
       saveBtn.textContent = "جاري تحليل مشاعرك...";
 
-      // 1. الاتصال بالذكاء الاصطناعي (سيرفر Render الداخلي)
-      const response = await fetch("/predict", { 
+      // تعديل: تحديد مسار السيرفر بشكل مرن (يقرأ من رابط الموقع الحالي)
+      const baseUrl = window.location.origin; 
+      const response = await fetch(`${baseUrl}/predict`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: text }) 
@@ -94,7 +95,7 @@ if (saveBtn && note) {
       if (!response.ok) throw new Error("AI Service Error");
 
       const data = await response.json();
-      const moodResult = data.mood; // استلام النتيجة من Flask
+      const moodResult = data.mood || "غير محدد"; // استلام النتيجة من Flask
 
       // 2. حفظ البيانات في Firebase
       const today = new Date().toISOString().split('T')[0];
@@ -118,7 +119,7 @@ if (saveBtn && note) {
 
     } catch (error) {
       console.error("Error details:", error);
-      alert("حدث خطأ في الاتصال بالسيرفر. تأكدي أن موقع Render يعمل (Live).");
+      alert("حدث خطأ في الاتصال بالسيرفر. تأكدي أن الموقع يعمل (Live) وأن ملف app.py لا يحتوي على أخطاء.");
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = "حفظ المذكرة";
