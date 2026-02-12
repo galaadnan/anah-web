@@ -9,7 +9,7 @@ CORS(app)
 # 1. إعدادات الموديلات
 MARBERT_URL = "https://api-inference.huggingface.co/models/UBC-NLP/MARBERTv2"
 # ملاحظة: Gemini يحتاج API Key مجاني من (Google AI Studio)
-GEMINI_API_KEY = "ضعي_هنا_API_KEY_الخاص_بجمناي" 
+GEMINI_API_KEY = "AIzaSyBwvYsTx390iIbaBXKlMd7MBTH9SuGXhtM" 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 @app.route('/')
@@ -60,3 +60,4 @@ def predict():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
